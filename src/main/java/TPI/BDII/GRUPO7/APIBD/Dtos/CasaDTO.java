@@ -7,9 +7,10 @@ import java.util.List;
 
 @AllArgsConstructor
 @Data
-public class Casa {
+public class CasaDTO {
     private int id;
     private int altura;
     private List<String> sensores;
+    private ConsumoDTO consumoDTO;
     private int costoMensual;
 }
