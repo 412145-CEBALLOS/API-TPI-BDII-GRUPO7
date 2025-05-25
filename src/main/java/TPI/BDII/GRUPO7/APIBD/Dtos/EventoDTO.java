@@ -11,5 +11,5 @@ public class EventoDTO {
     private String sensor;
     private String fecha;
     private String hora;
-    private Double segundos;
+    private Integer segundos;
 }

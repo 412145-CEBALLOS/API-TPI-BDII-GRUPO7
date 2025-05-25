@@ -3,6 +3,7 @@ package TPI.BDII.GRUPO7.APIBD.Servicies;
 import TPI.BDII.GRUPO7.APIBD.DBconection.MongoDBManager;
 import TPI.BDII.GRUPO7.APIBD.Dtos.CasaDTO;
 import TPI.BDII.GRUPO7.APIBD.Dtos.EventoDTO;
+import jakarta.annotation.PreDestroy;
 import org.bson.Document;
 import org.springframework.stereotype.Service;
 
@@ -11,8 +12,17 @@ import java.util.List;
 @Service
 public class MongoDBService {
 
-    private final MongoDBManager dbManager = new MongoDBManager();
+    private final MongoDBManager dbManager;
+    public MongoDBService(){
+        this.dbManager = new MongoDBManager();
+    }
 
+    @PreDestroy
+    public void cleanup(){
+        if(dbManager != null){
+            dbManager.cerrarConexion();
+        }
+    }
     public List<Document> getAllCasas() {
         return dbManager.getAllCasas();
     }

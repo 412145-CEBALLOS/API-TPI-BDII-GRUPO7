@@ -1,6 +1,7 @@
 package TPI.BDII.GRUPO7.APIBD.DBconection;
 
 import TPI.BDII.GRUPO7.APIBD.Dtos.CasaDTO;
+import TPI.BDII.GRUPO7.APIBD.Dtos.ConsumoDTO;
 import TPI.BDII.GRUPO7.APIBD.Dtos.EventoDTO;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
@@ -55,7 +56,9 @@ public class MongoDBManager {
             Document insertCasa = new Document("_id", nuevoId)
                     .append("altura", casaDTO.getAltura())
                     .append("sensores", casaDTO.getSensores())
+                    .append("consumo", convertirConsumoDocument(casaDTO.getConsumoDTO()))
                     .append("costoMensual", casaDTO.getCostoMensual());
+
 
             casasCollection.insertOne(insertCasa);
             System.out.println("Casa creada exitosamente con ID: " + nuevoId);
@@ -63,6 +66,12 @@ public class MongoDBManager {
         } catch (Exception e) {
             System.err.println("Error al crear casa");
         }
+    }
+
+    private Document convertirConsumoDocument(ConsumoDTO consumoDTO) {
+        return new Document("escalon", consumoDTO.getEscalon())
+                .append("bonificacion", consumoDTO.getBonificacion())
+                .append("alerta", consumoDTO.getAlerta());
     }
 
     public void crearEvento(EventoDTO eventoDTO) {
@@ -193,7 +202,7 @@ public class MongoDBManager {
         } catch (Exception e) {
             System.err.println("Error al obtener la habitacion mas frecuente");
         }
-        return round((float) tiempoAVG / cont);
+        return cont > 0 ? Math.round((float) tiempoAVG / cont) : 0;
     }
 
     public String getHoraMasDetecciones(int altura) {
