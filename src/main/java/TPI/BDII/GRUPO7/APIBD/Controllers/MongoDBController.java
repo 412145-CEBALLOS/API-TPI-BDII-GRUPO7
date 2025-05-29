@@ -71,4 +71,41 @@ public class MongoDBController {
         return bdService.getSensoresSinDeteccionMes(altura);
     }
 
+    @GetMapping("/consumo-casa-habitacion/{altura}")
+    public Document obtenerConsumoTotalPorCasa(@PathVariable Integer altura) {
+        return bdService.getConsumoCasaHabitacion(altura);
+    }
+
+    @GetMapping("/top3-casas")
+    public List<Document> getTop3CasasConMayorConsumo() {
+        return bdService.getTop3CasasMayorConsumo();
+    }
+
+    @GetMapping("/consumo-dia/{altura}")
+    public List<Document> getConsumoPorDia(@PathVariable Integer altura) {
+        return bdService.getConsumoPorDia(altura);
+    }
+
+    @GetMapping("/consumo-por-hora/{altura}")
+    public List<Document> obtenerConsumoHora(@PathVariable Integer altura) {
+        return bdService.getConsumoHora(altura);
+    }
+
+    @GetMapping("/costo-estimado/{altura}/{anio}/{mes}")
+    public Double getCostoEstimadoMensual(
+            @PathVariable Integer altura,
+            @PathVariable int anio,
+            @PathVariable int mes) {
+
+        return bdService.getCostoEstimadoMensual(altura, mes, anio);
+    }
+
+    @GetMapping("/consumo-dia-semana-mes/{altura}")
+    public List<Document> getConsumoPorDiaSemanaMes(@PathVariable Integer altura) {
+        return  bdService.getConsumoPorDiaSemanaYMes(altura);
+    }
+
+
+
 }
+

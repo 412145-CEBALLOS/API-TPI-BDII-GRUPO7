@@ -67,4 +67,27 @@ public class MongoDBService {
         return dbManager.getSensoresSinDeteccionMes(altura);
     }
 
+    public Document getConsumoCasaHabitacion(Integer altura) {
+        return dbManager.getConsumoCasaHabitacion(altura);
+    }
+
+    public List<Document> getTop3CasasMayorConsumo() {
+        return dbManager.getTop3CasasMayorConsumo();
+    }
+
+    public List<Document> getConsumoPorDia(Integer altura) {
+        return dbManager.getConsumoPorDia(altura);
+    }
+
+    public List<Document> getConsumoHora(Integer altura) {
+        return dbManager.getConsumoHora(altura);
+    }
+
+    public double getCostoEstimadoMensual(Integer altura, int mes, int anio) {
+        return dbManager.getCostoEstimadoMensual(altura, mes, anio);
+    }
+
+    public List<Document> getConsumoPorDiaSemanaYMes (Integer altura){
+        return dbManager.getConsumoPorDiaSemanaYMes(altura);
+    }
 }

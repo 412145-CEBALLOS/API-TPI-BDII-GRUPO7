@@ -12,6 +12,7 @@ import org.bson.Document;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.WeekFields;
 import java.util.*;
 
 import static java.lang.Math.round;
@@ -310,6 +311,254 @@ public class MongoDBManager {
 
         return sensoresSinDeteccion;
     }
+
+
+
+    // En algunos casos no se si la forma de respuesta sea la optima
+    // por eso decia que queria ir probando por ensayo y error si lograba hacer funcionar las estadisticas
+
+
+    public Document getConsumoCasaHabitacion(Integer altura) {
+        // Filtrar eventos por altura
+        FindIterable<Document> eventos = eventosCollection.find(Filters.eq("altura", altura));
+
+        // Contar eventos por habitación
+        Map<String, Integer> eventosPorHabitacion = new HashMap<>();
+        for (Document evento : eventos) {
+            String habitacion = evento.getString("sensor");
+            eventosPorHabitacion.put(habitacion, eventosPorHabitacion.getOrDefault(habitacion, 0) + 1);
+        }
+
+        // Calcular consumo por habitación (puse para que sume 10 unidades de consumo por evento, cambiar si se quiere otro numeor)
+        List<Document> habitaciones = new ArrayList<>();
+        int consumoTotal = 0;
+        for (Map.Entry<String, Integer> entry : eventosPorHabitacion.entrySet()) {
+            int consumo = entry.getValue() * 10;
+            Document docHabitacion = new Document()
+                    .append("habitacion", entry.getKey())
+                    .append("consumo", consumo);
+            habitaciones.add(docHabitacion);
+            consumoTotal += consumo;
+        }
+
+
+        Document resumen = new Document();
+        resumen.append("casaId", altura);
+        resumen.append("consumoTotal", consumoTotal);
+        resumen.append("porHabitacion", habitaciones);
+
+        return resumen;
+    }
+
+
+    public List<Document> getTop3CasasMayorConsumo() {
+        // Traer todos los eventos
+        FindIterable<Document> eventos = eventosCollection.find();
+
+        // Contar eventos por casa
+        Map<Integer, Integer> eventosPorCasa = new HashMap<>();
+        for (Document evento : eventos) {
+            Integer altura = evento.getInteger("altura");
+            eventosPorCasa.put(altura, eventosPorCasa.getOrDefault(altura, 0) + 1);
+        }
+
+        // Crear lista con consumo total (* 10)
+        List<Document> listaConsumo = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> entry : eventosPorCasa.entrySet()) {
+            int consumo = entry.getValue() * 10;
+            listaConsumo.add(new Document()
+                    .append("casaId", entry.getKey())
+                    .append("consumoTotal", consumo));
+        }
+
+        // Ordenar de forma descendente
+        listaConsumo.sort((d1, d2) -> d2.getInteger("consumoTotal").compareTo(d1.getInteger("consumoTotal")));
+
+        // Devolver los primeros 3 elementos
+        return listaConsumo.subList(0, Math.min(3, listaConsumo.size()));
+    }
+
+
+
+
+    public List<Document> getConsumoPorDia(Integer altura) {
+        // Formato de fecha y hora
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+        // Filtrar eventos por casa
+        FindIterable<Document> eventos = eventosCollection.find(Filters.eq("altura", altura));
+
+        // Uso treemap para que se ordenen los dias
+        Map<Integer, Integer> eventosPorDiaSemana = new TreeMap<>();
+
+        //Recorrer eventos
+        for (Document evento : eventos) {
+            String fechaStr = evento.getString("fecha");
+            String horaStr = evento.getString("hora");
+
+            // Unir fecha y hora y convertir
+            LocalDateTime fechaHora = LocalDateTime.parse(fechaStr + " " + horaStr, formatter);
+
+            // Obtener el dia
+            int diaSemana = fechaHora.getDayOfWeek().getValue();
+
+            // Contar eventos por dia
+            eventosPorDiaSemana.put(diaSemana, eventosPorDiaSemana.getOrDefault(diaSemana, 0) + 10);
+        }
+
+        // Crear lista con los dias y cantidad de eventos
+        List<Document> listaDias = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> entry : eventosPorDiaSemana.entrySet()) {
+            listaDias.add(new Document()
+                    .append("dia", entry.getKey())
+                    .append("consumoDia", entry.getValue()));
+        }
+
+
+        return listaDias;
+    }
+
+
+
+
+    public List<Document> getConsumoHora(Integer altura) {
+        // Formato de fecha y hora
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+        // Buscar eventos por casa
+        FindIterable<Document> eventos = eventosCollection.find(Filters.eq("altura", altura));
+
+        // contar eventos por hora
+        Map<Integer, Integer> eventosPorHora = new TreeMap<>();
+
+        for (Document evento : eventos) {
+            String fechaStr = evento.getString("fecha");
+            String horaStr = evento.getString("hora");
+
+            LocalDateTime fechaHora = LocalDateTime.parse(fechaStr + " " + horaStr, formatter);
+
+            // Obtener la hora
+            int hora = fechaHora.getHour();
+
+            // Sumar evento para la hora
+            eventosPorHora.put(hora, eventosPorHora.getOrDefault(hora, 0) + 1);
+        }
+
+        // Armar lista de hora y consumo (* 10)
+        List<Document> consumoPorHora = new ArrayList<>();
+        for (Map.Entry<Integer, Integer> entry : eventosPorHora.entrySet()) {
+            consumoPorHora.add(new Document()
+                    .append("hora", entry.getKey())
+                    .append("consumo", entry.getValue() * 10));
+        }
+
+        return consumoPorHora;
+    }
+
+    public double getCostoEstimadoMensual(Integer altura, int mes, int anio) {
+        //Si se quiere hacer obtener la tarifa de otra forma entonces se agrega como parametro
+        double tarifa = 10;
+        // Formato fecha + hora
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+        // Filtrar everntos por casa
+        FindIterable<Document> eventos = eventosCollection.find(Filters.eq("altura", altura));
+
+        int totalEventosDelMes = 0;
+
+        for (Document evento : eventos) {
+            String fechaStr = evento.getString("fecha");
+            String horaStr = evento.getString("hora");
+
+            LocalDateTime fechaHora = LocalDateTime.parse(fechaStr + " " + horaStr, formatter);
+
+            // Filtrar por mes y año
+            if (fechaHora.getMonthValue() == mes && fechaHora.getYear() == anio) {
+                totalEventosDelMes++;
+            }
+        }
+
+        // Calcular consumo total
+        double consumo = totalEventosDelMes * 10;
+
+        // Calcular costo
+        return consumo * tarifa;
+    }
+
+
+
+    public List<Document> getConsumoPorDiaSemanaYMes(Integer altura) {
+        // Formato fecha - hora
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+        // Filtrar por casa
+        FindIterable<Document> eventos = eventosCollection.find(Filters.eq("altura", altura));
+
+        // mapas para mantener el orden
+        Map<String, Integer> consumoPorDia = new TreeMap<>();
+        Map<String, Integer> consumoPorSemana = new TreeMap<>();
+        Map<String, Integer> consumoPorMes = new TreeMap<>();
+
+        for (Document evento : eventos) {
+            String fechaStr = evento.getString("fecha");
+            String horaStr = evento.getString("hora");
+
+            LocalDateTime fechaHora = LocalDateTime.parse(fechaStr + " " + horaStr, formatter);
+
+            // Suma para día
+            String dia = fechaHora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            consumoPorDia.put(dia, consumoPorDia.getOrDefault(dia, 0) + 10);
+
+            // Suma para semana
+            WeekFields weekFields = WeekFields.of(Locale.getDefault());
+            int semana = fechaHora.get(weekFields.weekOfWeekBasedYear());
+            int anio = fechaHora.getYear();
+            String semanaKey = String.format("%04d-%02d", anio, semana);
+            consumoPorSemana.put(semanaKey, consumoPorSemana.getOrDefault(semanaKey, 0) + 10);
+
+            // Suma para mes
+            String mes = fechaHora.format(DateTimeFormatter.ofPattern("MM/yyyy"));
+            consumoPorMes.put(mes, consumoPorMes.getOrDefault(mes, 0) + 10);
+        }
+
+        // Convertir mapas a lista
+        List<Document> resultado = new ArrayList<>();
+
+        for (Map.Entry<String, Integer> entry : consumoPorDia.entrySet()) {
+            resultado.add(new Document()
+                    .append("periodo", entry.getKey())
+                    .append("tipo", "dia")
+                    .append("consumo", entry.getValue()));
+        }
+
+        for (Map.Entry<String, Integer> entry : consumoPorSemana.entrySet()) {
+            resultado.add(new Document()
+                    .append("periodo", entry.getKey())
+                    .append("tipo", "semana")
+                    .append("consumo", entry.getValue()));
+        }
+
+        for (Map.Entry<String, Integer> entry : consumoPorMes.entrySet()) {
+            resultado.add(new Document()
+                    .append("periodo", entry.getKey())
+                    .append("tipo", "mes")
+                    .append("consumo", entry.getValue()));
+        }
+
+        return resultado;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
     public void cerrarConexion() { // cerrar la conexión definitivamente
         if (mongoClient != null) {
