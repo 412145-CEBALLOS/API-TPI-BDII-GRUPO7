@@ -316,7 +316,6 @@ public class MongoDBManager {
     }
 
 
-
     // En algunos casos no se si la forma de respuesta sea la optima
     // por eso decia que queria ir probando por ensayo y error si lograba hacer funcionar las estadisticas
 
@@ -418,7 +417,6 @@ public class MongoDBManager {
     }
 
 
-
     // Ejemplo de formato: "http://localhost:8080/api/v1/consumo-hora?altura=199&fecha=02/03/2025"
     public List<Document> getConsumoHora(Integer altura, String fechaInput) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
@@ -459,7 +457,6 @@ public class MongoDBManager {
 
         return consumoPorHora;
     }
-
 
 
     public double getCostoEstimadoMensual(Integer altura, int mes, int anio) {
@@ -599,19 +596,56 @@ public class MongoDBManager {
     }
 
 
+    public Map<Integer, Integer> getEscalonTarifarioPorCasa(List<Integer> alturas, String fechaInput){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        YearMonth mesFiltrado;
 
+        try {
+            mesFiltrado = YearMonth.parse(fechaInput.trim(), DateTimeFormatter.ofPattern("MM/yyyy"));
+        } catch (DateTimeParseException ex) {
+            return Collections.emptyMap();
+        }
 
+        int limiteEscalon1 = 300;
+        int limiteEscalon2 = 600;
 
+        Map<Integer, Integer> escalonesPorCasa = new HashMap<>();
 
+        for (Integer altura : alturas) {
+            FindIterable<Document> eventos = eventosCollection.find(Filters.eq("altura", altura));
+            int totalEventos = 0;
 
+            for (Document evento : eventos) {
+                String fechaStr = evento.getString("fecha");
+                String horaStr = evento.getString("hora");
+                if (fechaStr == null || horaStr == null) continue;
 
+                try {
+                    LocalDateTime fechaHora = LocalDateTime.parse(fechaStr + " " + horaStr, formatter);
+                    YearMonth eventoMes = YearMonth.from(fechaHora);
+                    if (eventoMes.equals(mesFiltrado)) {
+                        totalEventos++;
+                    }
+                } catch (DateTimeParseException e) {
+                }
+            }
 
+            int consumoTotal = totalEventos * 10;
 
+            int escalon;
+            if (consumoTotal <= limiteEscalon1) {
+                escalon = 1;
+            } else if (consumoTotal <= limiteEscalon2) {
+                escalon = 2;
+            } else {
+                escalon = 3;
+            }
 
+            escalonesPorCasa.put(altura, escalon);
+        }
 
-
-
-
+        return escalonesPorCasa;
+    }
 
 
 
@@ -621,6 +655,7 @@ public class MongoDBManager {
         if (mongoClient != null) {
             mongoClient.close();
             System.out.println("Conexión cerrada");
+
         }
     }
 }

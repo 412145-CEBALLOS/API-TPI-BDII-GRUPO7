@@ -8,6 +8,7 @@ import org.bson.Document;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class MongoDBService {
@@ -95,4 +96,10 @@ public class MongoDBService {
     public Document getConsumoPorMes(Integer altura, String fechaInput, int limiteMensualKwh) {
         return dbManager.getConsumoPorMesEmitirAlerta(altura, fechaInput, limiteMensualKwh);
     }
+
+    public Map<Integer, Integer> getEscalonTarifarioPorCasa(List<Integer> alturas, String fechaInput) {
+        return dbManager.getEscalonTarifarioPorCasa(alturas, fechaInput);
+    }
+
+
 }

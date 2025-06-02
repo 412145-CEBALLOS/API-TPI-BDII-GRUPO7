@@ -8,6 +8,7 @@ import org.bson.Document;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @AllArgsConstructor
 @RestController
@@ -117,6 +118,14 @@ public class MongoDBController {
             @RequestParam int limite) {
         return bdService.getConsumoPorMes(altura, fecha, limite);
     }
+
+    @GetMapping("/escalon-tarifario")
+    public Map<Integer, Integer> getEscalonTarifario(
+            @RequestParam Integer altura,
+            @RequestParam String fecha) {
+        return bdService.getEscalonTarifarioPorCasa(List.of(altura), fecha);
+    }
+
 
 
 }
