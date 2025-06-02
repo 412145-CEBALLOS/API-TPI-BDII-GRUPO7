@@ -75,13 +75,14 @@ public class MongoDBService {
         return dbManager.getTop3CasasMayorConsumo();
     }
 
-    public List<Document> getConsumoPorDia(Integer altura) {
-        return dbManager.getConsumoPorDia(altura);
+    public List<Document> getConsumoPorDia(Integer altura, String fechaInput) {
+        return dbManager.getConsumoPorDia(altura, fechaInput);
     }
 
-    public List<Document> getConsumoHora(Integer altura) {
-        return dbManager.getConsumoHora(altura);
+    public List<Document> getConsumoHora(Integer altura, String fecha) {
+        return dbManager.getConsumoHora(altura, fecha);
     }
+
 
     public double getCostoEstimadoMensual(Integer altura, int mes, int anio) {
         return dbManager.getCostoEstimadoMensual(altura, mes, anio);

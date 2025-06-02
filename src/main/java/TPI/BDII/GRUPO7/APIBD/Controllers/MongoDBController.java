@@ -81,14 +81,19 @@ public class MongoDBController {
         return bdService.getTop3CasasMayorConsumo();
     }
 
-    @GetMapping("/consumo-dia/{altura}")
-    public List<Document> getConsumoPorDia(@PathVariable Integer altura) {
-        return bdService.getConsumoPorDia(altura);
+    @GetMapping("/consumo-dia")
+    public List<Document> getConsumoPorDia(
+            @RequestParam Integer altura,
+            @RequestParam String fecha) {
+        return bdService.getConsumoPorDia(altura, fecha);
     }
 
-    @GetMapping("/consumo-por-hora/{altura}")
-    public List<Document> obtenerConsumoHora(@PathVariable Integer altura) {
-        return bdService.getConsumoHora(altura);
+
+    @GetMapping("/consumo-hora")
+    public List<Document> getConsumoPorHora(
+            @RequestParam Integer altura,
+            @RequestParam String fecha) {
+        return bdService.getConsumoHora(altura, fecha);
     }
 
     @GetMapping("/costo-estimado/{altura}/{anio}/{mes}")
