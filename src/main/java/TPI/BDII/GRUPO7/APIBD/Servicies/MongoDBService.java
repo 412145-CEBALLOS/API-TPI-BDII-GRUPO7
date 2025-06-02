@@ -91,4 +91,8 @@ public class MongoDBService {
     public List<Document> getConsumoPorDiaSemanaYMes (Integer altura){
         return dbManager.getConsumoPorDiaSemanaYMes(altura);
     }
+
+    public Document getConsumoPorMes(Integer altura, String fechaInput, int limiteMensualKwh) {
+        return dbManager.getConsumoPorMesEmitirAlerta(altura, fechaInput, limiteMensualKwh);
+    }
 }

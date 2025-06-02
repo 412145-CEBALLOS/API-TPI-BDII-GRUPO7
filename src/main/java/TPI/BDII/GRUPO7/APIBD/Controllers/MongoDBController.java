@@ -110,6 +110,13 @@ public class MongoDBController {
         return  bdService.getConsumoPorDiaSemanaYMes(altura);
     }
 
+    @GetMapping("/consumo-mensual-alerta")
+    public Document getConsumoMensual(
+            @RequestParam Integer altura,
+            @RequestParam String fecha,
+            @RequestParam int limite) {
+        return bdService.getConsumoPorMes(altura, fecha, limite);
+    }
 
 
 }

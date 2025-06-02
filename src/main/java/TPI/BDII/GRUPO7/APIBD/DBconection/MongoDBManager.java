@@ -12,6 +12,7 @@ import org.bson.Document;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.WeekFields;
@@ -554,6 +555,49 @@ public class MongoDBManager {
 
         return resultado;
     }
+
+    // Ejemplo de formato: "http://localhost:8080/api/v1/consumo-mensual-alerta?altura=199&fecha=05/2025&limite=11"
+    public Document getConsumoPorMesEmitirAlerta(Integer altura, String fechaInput, int limiteMensualKwh) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+        YearMonth mesFiltrado;
+        try {
+            mesFiltrado = YearMonth.parse(fechaInput, DateTimeFormatter.ofPattern("MM/yyyy"));
+        } catch (DateTimeParseException e) {
+            return new Document("error", "Formato de fecha inválido. Usar MM/yyyy");
+        }
+
+        FindIterable<Document> eventos = eventosCollection.find(Filters.eq("altura", altura));
+        int totalEventos = 0;
+
+        for (Document evento : eventos) {
+            String fechaStr = evento.getString("fecha");
+            String horaStr = evento.getString("hora");
+
+            if (fechaStr == null || horaStr == null) continue;
+
+            try {
+                LocalDateTime fechaHora = LocalDateTime.parse(fechaStr + " " + horaStr, formatter);
+                YearMonth eventoMes = YearMonth.from(fechaHora);
+                if (eventoMes.equals(mesFiltrado)) {
+                    totalEventos++;
+                }
+            } catch (DateTimeParseException e) {
+            }
+        }
+
+        int consumoTotal = totalEventos * 10;
+        boolean superaLimite = consumoTotal >= (limiteMensualKwh * 0.9);
+
+        Document resultado = new Document()
+                .append("mes", mesFiltrado.toString()) // formato: "2025-06"
+                .append("consumoTotal", consumoTotal)
+                .append("limiteMensual", limiteMensualKwh)
+                .append("alerta", superaLimite ? "El consumo supera el 90% del límite mensual" : "OK");
+
+        return resultado;
+    }
+
 
 
 
