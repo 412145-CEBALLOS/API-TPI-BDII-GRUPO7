@@ -376,15 +376,13 @@ public class MongoDBManager {
     }
 
 
-    //http://localhost:8080/api/v1/consumo-dia?altura=199&fecha=02/03/2025
+    // Ejemplo de formato: "http://localhost:8080/api/v1/consumo-dia?altura=199&fecha=02/03/2025"
     public List<Document> getConsumoPorDia(Integer altura, String fechaInput) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-        DateTimeFormatter inputFechaFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        DateTimeFormatter soloFechaFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         LocalDate fechaFiltrada;
         try {
-            fechaFiltrada = LocalDate.parse(fechaInput, inputFechaFormatter);
+            fechaFiltrada = LocalDate.parse(fechaInput, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         } catch (DateTimeParseException e) {
             return Collections.emptyList();
         }
@@ -396,16 +394,12 @@ public class MongoDBManager {
             String fechaStr = evento.getString("fecha");
             String horaStr = evento.getString("hora");
 
-            if (fechaStr == null || horaStr == null || fechaStr.isEmpty() || horaStr.isEmpty()) {
-                continue;
-            }
-
-            String fechaHoraStr = fechaStr.trim() + " " + horaStr.trim();
+            if (fechaStr == null || horaStr == null) continue;
 
             try {
-                LocalDateTime fechaHora = LocalDateTime.parse(fechaHoraStr, formatter);
+                LocalDateTime fechaHora = LocalDateTime.parse(fechaStr + " " + horaStr, formatter);
                 if (fechaHora.toLocalDate().equals(fechaFiltrada)) {
-                    String fechaSolo = fechaHora.format(soloFechaFormatter);
+                    String fechaSolo = fechaHora.toLocalDate().toString();
                     eventosPorFecha.put(fechaSolo, eventosPorFecha.getOrDefault(fechaSolo, 0) + 1);
                 }
             } catch (DateTimeParseException e) {
@@ -423,14 +417,14 @@ public class MongoDBManager {
     }
 
 
+
     // Ejemplo de formato: "http://localhost:8080/api/v1/consumo-hora?altura=199&fecha=02/03/2025"
     public List<Document> getConsumoHora(Integer altura, String fechaInput) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-        DateTimeFormatter inputFechaFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
         LocalDate fechaFiltrada;
         try {
-            fechaFiltrada = LocalDate.parse(fechaInput, inputFechaFormatter);
+            fechaFiltrada = LocalDate.parse(fechaInput, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         } catch (DateTimeParseException e) {
             return Collections.emptyList();
         }
@@ -442,19 +436,16 @@ public class MongoDBManager {
             String fechaStr = evento.getString("fecha");
             String horaStr = evento.getString("hora");
 
-            if (fechaStr == null || horaStr == null || fechaStr.isEmpty() || horaStr.isEmpty()) {
-                continue;
-            }
-
-            String fechaHoraStr = fechaStr.trim() + " " + horaStr.trim();
+            if (fechaStr == null || horaStr == null) continue;
 
             try {
-                LocalDateTime fechaHora = LocalDateTime.parse(fechaHoraStr, formatter);
+                LocalDateTime fechaHora = LocalDateTime.parse(fechaStr + " " + horaStr, formatter);
                 if (fechaHora.toLocalDate().equals(fechaFiltrada)) {
                     int hora = fechaHora.getHour();
                     eventosPorHora.put(hora, eventosPorHora.getOrDefault(hora, 0) + 1);
                 }
             } catch (DateTimeParseException e) {
+
             }
         }
 
@@ -467,6 +458,7 @@ public class MongoDBManager {
 
         return consumoPorHora;
     }
+
 
 
     public double getCostoEstimadoMensual(Integer altura, int mes, int anio) {
@@ -498,11 +490,16 @@ public class MongoDBManager {
 
     public List<Document> getConsumoPorDiaSemanaYMes(Integer altura) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        DateTimeFormatter diaFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter mesFormatter = DateTimeFormatter.ofPattern("MM/yyyy");
+
         FindIterable<Document> eventos = eventosCollection.find(Filters.eq("altura", altura));
 
         Map<String, Integer> consumoPorDia = new TreeMap<>();
         Map<String, Integer> consumoPorSemana = new TreeMap<>();
         Map<String, Integer> consumoPorMes = new TreeMap<>();
+
+        WeekFields weekFields = WeekFields.of(DayOfWeek.MONDAY, 4);
 
         for (Document evento : eventos) {
             String fechaStr = evento.getString("fecha");
@@ -514,19 +511,17 @@ public class MongoDBManager {
 
             try {
                 LocalDateTime fechaHora = LocalDateTime.parse(fechaStr + " " + horaStr, formatter);
-
                 int consumoEvento = 10;
 
-                String dia = fechaHora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                String dia = fechaStr;
                 consumoPorDia.put(dia, consumoPorDia.getOrDefault(dia, 0) + consumoEvento);
 
-                WeekFields weekFields = WeekFields.of(DayOfWeek.MONDAY, 4);
                 int semana = fechaHora.get(weekFields.weekOfWeekBasedYear());
                 int anio = fechaHora.get(weekFields.weekBasedYear());
                 String semanaKey = String.format("%04d-%02d", anio, semana);
                 consumoPorSemana.put(semanaKey, consumoPorSemana.getOrDefault(semanaKey, 0) + consumoEvento);
 
-                String mes = fechaHora.format(DateTimeFormatter.ofPattern("MM/yyyy"));
+                String mes = fechaHora.format(mesFormatter);
                 consumoPorMes.put(mes, consumoPorMes.getOrDefault(mes, 0) + consumoEvento);
 
             } catch (DateTimeParseException e) {
@@ -559,6 +554,7 @@ public class MongoDBManager {
 
         return resultado;
     }
+
 
 
 
