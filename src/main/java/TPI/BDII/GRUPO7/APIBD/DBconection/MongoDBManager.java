@@ -587,7 +587,7 @@ public class MongoDBManager {
         boolean superaLimite = consumoTotal >= (limiteMensualKwh * 0.9);
 
         Document resultado = new Document()
-                .append("mes", mesFiltrado.toString()) // formato: "2025-06"
+                .append("mes", mesFiltrado.toString())
                 .append("consumoTotal", consumoTotal)
                 .append("limiteMensual", limiteMensualKwh)
                 .append("alerta", superaLimite ? "El consumo supera el 90% del límite mensual" : "OK");
@@ -596,6 +596,7 @@ public class MongoDBManager {
     }
 
 
+    // Ejemplo de formato: "http://localhost:8080/api/v1/escalon-tarifario?altura=199&fecha=02/2025"
     public Map<Integer, Integer> getEscalonTarifarioPorCasa(List<Integer> alturas, String fechaInput){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         YearMonth mesFiltrado;
