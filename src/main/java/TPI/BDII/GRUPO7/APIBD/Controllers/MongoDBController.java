@@ -126,7 +126,14 @@ public class MongoDBController {
         return bdService.getEscalonTarifarioPorCasa(List.of(altura), fecha);
     }
 
-
+    //EJ: http://localhost:8080/api/v1/rango-fechas/176?fechaInicio=01/01/2020&fechaFin=30/12/2025
+    @GetMapping("/rango-fechas/{altura}")
+    public List<Document> getRangoDeFechas(
+            @PathVariable int altura,
+            @RequestParam String fechaInicio,
+            @RequestParam String fechaFin){
+        return bdService.getEventosRangoFechas(altura,fechaInicio, fechaFin);
+    }
 
 }
 

@@ -101,5 +101,8 @@ public class MongoDBService {
         return dbManager.getEscalonTarifarioPorCasa(alturas, fechaInput);
     }
 
+    public List<Document> getEventosRangoFechas(int altura, String fechaInicio, String fechaFin) {
+        return dbManager.getEventosRangoFechas(altura, fechaInicio, fechaFin);
+    }
 
 }

@@ -18,7 +18,6 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.WeekFields;
 import java.util.*;
 
-import static java.lang.Math.round;
 
 
 public class MongoDBManager {
@@ -315,6 +314,37 @@ public class MongoDBManager {
         return sensoresSinDeteccion;
     }
 
+    public List<Document> getEventosRangoFechas(int altura, String fechaInicio, String fechaFin) {
+        List<Document> eventosDetectados = new ArrayList<>();
+
+        try {
+            // Parsear fechas de entrada
+            DateTimeFormatter formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            LocalDate fechaInicioLD = LocalDate.parse(fechaInicio, formatoFecha);
+            LocalDate fechaFinLD = LocalDate.parse(fechaFin, formatoFecha);
+
+            // Buscar eventos en el rango de fechas para esa altura
+            FindIterable<Document> eventos = eventosCollection.find(Filters.eq("altura", altura));
+
+            for (Document evento : eventos) {
+                String fechaStr = evento.getString("fecha"); // ej. "15/02/2025"
+                LocalDate fechaEvento = LocalDate.parse(fechaStr, formatoFecha);
+
+                // Verificar si la fecha del evento está dentro del rango (inclusive)
+                if ((fechaEvento.isEqual(fechaInicioLD) || fechaEvento.isAfter(fechaInicioLD)) &&
+                        (fechaEvento.isEqual(fechaFinLD) || fechaEvento.isBefore(fechaFinLD))) {
+                    eventosDetectados.add(evento);
+                }
+            }
+
+        } catch (DateTimeParseException e) {
+            System.err.println("Error al parsear las fechas. Formato esperado: dd/MM/yyyy - " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Error al consultar eventos: " + e.getMessage());
+        }
+
+        return eventosDetectados;
+    }
 
     // En algunos casos no se si la forma de respuesta sea la optima
     // por eso decia que queria ir probando por ensayo y error si lograba hacer funcionar las estadisticas
