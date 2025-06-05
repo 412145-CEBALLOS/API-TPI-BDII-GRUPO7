@@ -396,11 +396,11 @@ public class MongoDBManager {
         for (Map.Entry<Integer, Integer> entry : eventosPorCasa.entrySet()) {
             int consumo = entry.getValue() * 10;
             listaConsumo.add(new Document()
-                    .append("casaId", entry.getKey())
-                    .append("consumoTotal", consumo));
+                    .append("casa", entry.getKey())
+                    .append("consumo", consumo));
         }
 
-        listaConsumo.sort((d1, d2) -> d2.getInteger("consumoTotal").compareTo(d1.getInteger("consumoTotal")));
+        listaConsumo.sort((d1, d2) -> d2.getInteger("consumo").compareTo(d1.getInteger("consumo")));
 
         return listaConsumo.subList(0, Math.min(3, listaConsumo.size()));
     }
@@ -637,8 +637,8 @@ public class MongoDBManager {
             return Collections.emptyMap();
         }
 
-        int limiteEscalon1 = 300;
-        int limiteEscalon2 = 600;
+        int limiteEscalon1 = 30;
+        int limiteEscalon2 = 60;
 
         Map<Integer, Integer> escalonesPorCasa = new HashMap<>();
 
